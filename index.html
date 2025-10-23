@@ -4,31 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Earthquakes Monitor</title>
+  <link rel="icon" href="/assets/terremoto-logo.png" type="image/png">
   <link rel="stylesheet" href="./css/styles.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </head>
 <body>
-  <nav class="navbar">
-    <div class="nav-logo">Earthquakes Monitor</div>
-    <div class="nav-buttons">
-      <button id="loginBtn" class="btn">Login</button>
-      <button id="registerBtn" class="btn">Registrarte</button>
-      <button id="logoutBtn" class="btn hidden">Logout</button>
-    </div>
-  </nav>
-  <p id="message" class="message"></p>
-  <!-- LOGIN FORM -->
-  <section id="loginForm" class="modal hidden">
-    <form class="modal-content">
-      <h2>Iniciar Sesión</h2>
-      <input type="email" id="loginEmail" placeholder="Email" required />
-      <input type="password" id="loginPassword" placeholder="Contraseña" required />
-      <button type="submit" class="btn">Entrar</button>
-      <span class="close" id="closeLogin">&times;</span>
-    </form>
-  </section>
+  <header>
+     <nav class="navbar">
+      <div class="nav-logo">Descubre los terremotos del mundo</div>
+      <div class="nav-buttons">
+        <button id="loginBtn" class="btn">Login</button>
+        <button id="registerBtn" class="btn">Registrarte</button>
+        <button id="logoutBtn" class="btn hidden">Logout</button>
+      </div>
+    </nav>
+  </header>
+  <main>
+    <section class="masthead">
+          <img src="assets/jens-aber-fClNK-MIz_E-unsplash.jpg" alt="Terremoto">
+    </section>
 
-  <!-- REGISTRO FORM -->
+  <!-- LOGIN FORM -->
+    <section id="loginForm" class="modal hidden">
+      <form class="modal-content">
+        <h2>Iniciar Sesión</h2>
+        <input type="email" id="loginEmail" placeholder="Email" required />
+        <input type="password" id="loginPassword" placeholder="Contraseña" required />
+        <button type="submit" class="btn">Entrar</button>
+        <span class="close" id="closeLogin">&times;</span>
+      </form>
+    </section>
+
+  <!-- FORMULARIO DE REEGISTRO -->
   <section id="registerForm" class="modal hidden">
     <form class="modal-content">
       <h2>Registrarte</h2>
@@ -42,17 +49,15 @@
 
   <!-- USUARIO LOGUEADO -->
   <section id="userSection" class="hidden">
-    <h2>Bienvenido, <span id="userName"></span> 👋</h2>
+    <h1>¡Hola, <span id="userName"></span>!</h1>
   </section>
-
-  <!-- BOTONES FILTRO MAPA 1 -->
+  <!-- MAPAS -->
+  <h1>Descubre los terremotos del mundo</h1>
+    <!-- BOTON FILTRO MAPA 1 -->
   <div id="mapButtons" class="filter-buttons">
-    <button id="showAPI" class="btn">Mostrar Terremotos</button>
+    <button id="showAPI" class="btn">Mostrar Todo</button>
     <button id="showFavorites" class="btn">Mostrar Favoritos</button>
   </div>
-
-  <!-- MAPAS -->
-  <h1>Mapa de Terremotos 🌍</h1>
   <div id="mapAll" class="map"></div>
 
   <!-- FILTROS MAPA 2 -->
@@ -76,6 +81,12 @@
 
   <div id="mapFiltered" class="map"></div>
 
+  </main>
+ 
+  <footer>  
+    <p> Monitor de Terremotos 2025</p>
+  </footer>
+
   <!-- FIREBASE -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -84,7 +95,7 @@
   <!-- LEAFLET -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-  <!-- APP JS -->
+  <!-- JS -->
   <script src="./js/script.js"></script>
 </body>
 </html>
