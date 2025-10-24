@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const password = document.getElementById("loginPassword").value;
 
     // VALIDACIÓN CON REGEX 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; //se utiliza validar un formato básico de dirección de correo electrónico.
     if (!emailRegex.test(email)) {
       return Swal.fire({ icon: 'error', title: 'Email inválido' });
     }
@@ -183,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const mapAll = L.map('mapAll').setView([20, 0], 2);
   const mapFiltered = L.map('mapFiltered').setView([20, 0], 2);
 
-  // Agrego los tiles de OpenStreetMap
+  // Agrego las capas de OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapAll);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapFiltered);
 
@@ -339,25 +339,35 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  //FILTRO DE TERREMOTOS 
-  document.getElementById('applyFilter').addEventListener('click', () => {
-    const minMag = document.getElementById('minMag').value;
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
-    let url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minmagnitude=${minMag}&limit=50`;
+  // FILTRO DE TERREMOTOS 
+document.getElementById('applyFilter').addEventListener('click', () => {
+  // Obtengo los valores del formulario
+  const minMag = parseFloat(document.getElementById('minMag').value);
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
 
-    // Añado filtros de fecha si existen
-    if (startDate) url += `&starttime=${startDate}`;
-    if (endDate) url += `&endtime=${endDate}`;
+  // Defino un rango para la magnitud (±0.9) para filtrar correctamente
+  const maxMag = minMag + 0.9;
 
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        mapFiltered.eachLayer(l => {
-          if (l instanceof L.CircleMarker) mapFiltered.removeLayer(l);
-        });
-        data.features.forEach(eq => createMarker(mapFiltered, eq));
+  // Construyo la URL con min y max magnitude
+  let url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minmagnitude=${minMag}&maxmagnitude=${maxMag}&limit=50`;
+
+  // Añado filtros de fecha si existen
+  if (startDate) url += `&starttime=${startDate}`;
+  if (endDate) url += `&endtime=${endDate}`;
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      // Limpio los marcadores anteriores del mapa filtrado
+      mapFiltered.eachLayer(l => {
+        if (l instanceof L.CircleMarker) mapFiltered.removeLayer(l);
       });
-  });
 
-});
+      // Creo los marcadores filtrando por el rango de magnitud
+      data.features
+        .filter(eq => eq.properties.mag >= minMag && eq.properties.mag <= maxMag)
+        .forEach(eq => createMarker(mapFiltered, eq));
+    })
+    .catch(err => console.error('Error cargando terremotos filtrados:', err));
+});})
