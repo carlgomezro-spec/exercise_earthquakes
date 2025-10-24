@@ -1,4 +1,4 @@
-/************** Firebase Config *****************/
+// Datos de mi proyecto en Firebase (esto me lo da la consola de Firebase)
 const firebaseConfig = {
   apiKey: "AIzaSyDW0vYUIv7IdJ0_pycuAB76UJLYVRfKLQY",
   authDomain: "fir-web-3d27a.firebaseapp.com",
@@ -8,13 +8,15 @@ const firebaseConfig = {
   appId: "1:577325180059:web:f1b49a25e0c802394d523e"
 };
 
+// Inicializo Firebase y sus servicios principales
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
+// Espero a que el DOM esté cargado para poder acceder a los elementos HTML
 document.addEventListener("DOMContentLoaded", () => {
 
-  /********** NAVBAR Y MODALES **********/
+ //VARIABLES DEL DOM (botones y formularios)
   const loginBtn = document.getElementById("loginBtn");
   const registerBtn = document.getElementById("registerBtn");
   const logoutBtn = document.getElementById("logoutBtn");
@@ -28,65 +30,86 @@ document.addEventListener("DOMContentLoaded", () => {
   const userNameSpan = document.getElementById("userName");
   const showFavoritesBtn = document.getElementById("showFavorites");
 
+//LOGO QUE RECARGA LA PÁGINA 
+  const navLogo = document.querySelector(".nav-logo");
+  if (navLogo) {
+    navLogo.style.cursor = "pointer"; // cambio el cursor a tipo "manita"
+    navLogo.addEventListener("click", () => {
+      location.reload(); // recargo la página
+    });
+  }
+
+ //EVENTOS DE LOS MODALES 
+  // Muestra el formulario de login
   loginBtn.addEventListener("click", () => {
     loginFormModal.classList.remove("hidden");
     registerFormModal.classList.add("hidden");
   });
+
+  // Muestra el formulario de registro
   registerBtn.addEventListener("click", () => {
     registerFormModal.classList.remove("hidden");
     loginFormModal.classList.add("hidden");
   });
+
+  // Cierra los formularios
   closeLogin.addEventListener("click", () => loginFormModal.classList.add("hidden"));
   closeRegister.addEventListener("click", () => registerFormModal.classList.add("hidden"));
 
-  /********** FIREBASE AUTH **********/
+  //FUNCIONES DE AUTENTICACIÓN CON FIREBASE
   const signUpUser = (name, email, password) => {
-  auth.createUserWithEmailAndPassword(email, password)
-    .then(async userCredential => {
-      const user = userCredential.user;
-      await db.collection("users").doc(user.uid).set({
-        name, email, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      localStorage.setItem("userName", name);
-      updateUIForAuth(user);
-      registerFormModal.classList.add("hidden");
-      Swal.fire({
-        icon: 'success',
-        title: 'Usuario registrado!',
-        showConfirmButton: false,
-        timer: 1500
-      });
-    })
-    .catch(err => Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: err.message
-    }));
-};
+    auth.createUserWithEmailAndPassword(email, password)
+      .then(async userCredential => {
+        const user = userCredential.user;
+        // Guardo los datos del usuario en Firestore
+        await db.collection("users").doc(user.uid).set({
+          name,
+          email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        // Guardo el nombre en el almacenamiento local
+        localStorage.setItem("userName", name);
+        updateUIForAuth(user);
+        registerFormModal.classList.add("hidden");
+        Swal.fire({
+          icon: 'success',
+          title: 'Usuario registrado!',
+          showConfirmButton: false,
+          timer: 1500
+        });
+      })
+      .catch(err => Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message
+      }));
+  };
 
- const signInUser = (email, password) => {
-  auth.signInWithEmailAndPassword(email, password)
-    .then(async userCredential => {
-      const user = userCredential.user;
-      const doc = await db.collection("users").doc(user.uid).get();
-      const name = doc.exists ? doc.data().name : user.email;
-      localStorage.setItem("userName", name);
-      updateUIForAuth(user);
-      loginFormModal.classList.add("hidden");
-      Swal.fire({
-        icon: 'success',
-        title: 'Bienvenido!',
-        showConfirmButton: false,
-        timer: 1500
-      });
-    })
-    .catch(err => Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: err.message
-    }));
-};
+  const signInUser = (email, password) => {
+    auth.signInWithEmailAndPassword(email, password)
+      .then(async userCredential => {
+        const user = userCredential.user;
+        // Busco el nombre en Firestore para mostrarlo
+        const doc = await db.collection("users").doc(user.uid).get();
+        const name = doc.exists ? doc.data().name : user.email;
+        localStorage.setItem("userName", name);
+        updateUIForAuth(user);
+        loginFormModal.classList.add("hidden");
+        Swal.fire({
+          icon: 'success',
+          title: 'Bienvenido!',
+          showConfirmButton: false,
+          timer: 1500
+        });
+      })
+      .catch(err => Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message
+      }));
+  };
 
+  // Cerrar sesión
   const signOutUser = () => {
     auth.signOut().then(() => {
       localStorage.clear();
@@ -94,10 +117,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
+  //EVENTOS DE LOS FORMULARIOS 
   loginForm.addEventListener("submit", e => {
     e.preventDefault();
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
+
+    // VALIDACIÓN CON REGEX 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return Swal.fire({ icon: 'error', title: 'Email inválido' });
+    }
+
     signInUser(email, password);
   });
 
@@ -106,13 +137,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const name = document.getElementById("registerName").value;
     const email = document.getElementById("registerEmail").value;
     const password = document.getElementById("registerPassword").value;
+
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{6,}$/;
+    if (!passwordRegex.test(password)) {
+      return Swal.fire({
+        icon: 'warning',
+        title: 'Contraseña débil',
+        text: 'Debe tener al menos 6 caracteres, una mayúscula y un número'
+      });
+    }
+
     signUpUser(name, email, password);
   });
 
   logoutBtn.addEventListener("click", signOutUser);
 
-  function updateUIForAuth(user){
-    if(user){
+  //ACTUALIZAR INTERFAZ SEGÚN LOGIN 
+  function updateUIForAuth(user) {
+    if (user) {
       const name = localStorage.getItem("userName") || user.email;
       userSection.classList.remove("hidden");
       userNameSpan.textContent = name;
@@ -131,38 +173,41 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Firebase detecta automáticamente si hay un usuario logueado
   firebase.auth().onAuthStateChanged(user => {
     updateUIForAuth(user);
   });
 
-  /********** LEAFLET MAPS **********/
-  const mapAll = L.map('mapAll').setView([20,0], 2);
-  const mapFiltered = L.map('mapFiltered').setView([20,0], 2);
+ //MAPAS DE LEAFLET 
+  // Creo dos mapas: uno general y uno filtrado
+  const mapAll = L.map('mapAll').setView([20, 0], 2);
+  const mapFiltered = L.map('mapFiltered').setView([20, 0], 2);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(mapAll);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(mapFiltered);
+  // Agrego los tiles de OpenStreetMap
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapAll);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapFiltered);
 
-  function getColor(mag){
-    if(mag >= 7) return 'red';
-    if(mag >= 5) return 'orange';
-    if(mag >= 3) return 'yellow';
+  // Función que devuelve un color según la magnitud
+  function getColor(mag) {
+    if (mag >= 7) return 'red';
+    if (mag >= 5) return 'orange';
+    if (mag >= 3) return 'yellow';
     return 'green';
   }
 
   let mapMarkers = [];
-  function clearMarkers(map){
+
+  // Limpia los marcadores del mapa
+  function clearMarkers(map) {
     mapMarkers.forEach(m => map.removeLayer(m));
     mapMarkers = [];
   }
 
-  /********** FAVORITOS **********/
+  // FAVORITOS 
   const showAPI = document.getElementById('showAPI');
 
-  function createMarker(map, eq, isFavorite=false){
+  // Crea un marcador de terremoto
+  function createMarker(map, eq, isFavorite = false) {
     const coords = [eq.geometry.coordinates[1], eq.geometry.coordinates[0]];
     const mag = eq.properties.mag;
     const title = eq.properties.title;
@@ -170,19 +215,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const code = eq.id;
     const date = new Date(eq.properties.time).toLocaleString();
 
+    // Creo el círculo en el mapa
     const marker = L.circleMarker(coords, {
-      radius: mag*2,
+      radius: mag * 2,
       fillColor: getColor(mag),
-      color:'#000',
-      weight:1,
-      opacity:1,
-      fillOpacity:0.7
+      color: '#000',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.7
     }).addTo(map);
 
+    // Botón de favoritos
     let btnHTML = '';
-    if(isFavorite){
+    if (isFavorite) {
       btnHTML = `<button class="removeFavBtn" data-id="${code}">Eliminar de favoritos</button>`;
-    } else if(auth.currentUser){
+    } else if (auth.currentUser) {
       btnHTML = `<button class="addFavBtn" 
         data-id="${code}" 
         data-title="${title}" 
@@ -197,7 +244,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <b>${title}</b><br>
       Fecha: ${date}<br>
       Lugar: ${place}<br>
-      Código: ${code}<br>
       Magnitud: ${mag}<br>
       ${btnHTML}
     `);
@@ -205,28 +251,25 @@ document.addEventListener("DOMContentLoaded", () => {
     mapMarkers.push(marker);
   }
 
-  function loadAPIQuakes(){
+  // Carga los terremotos desde la API de USGS
+  function loadAPIQuakes() {
     clearMarkers(mapAll);
     fetch('https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&limit=50')
       .then(res => res.json())
       .then(data => data.features.forEach(eq => createMarker(mapAll, eq)));
   }
 
-  function loadFavoriteQuakes(){
-    if(!auth.currentUser) return;
+  // Carga los terremotos guardados como favoritos
+  function loadFavoriteQuakes() {
+    if (!auth.currentUser) return;
     clearMarkers(mapAll);
     const userId = auth.currentUser.uid;
-    db.collection('favorites').where('userId','==',userId).get()
+    db.collection('favorites').where('userId', '==', userId).get()
       .then(snapshot => {
         snapshot.forEach(doc => {
           const eq = {
-            geometry: { coordinates:[doc.data().coords[1], doc.data().coords[0]] },
-            properties: {
-              title: doc.data().title,
-              place: doc.data().place,
-              mag: doc.data().mag,
-              time: doc.data().time
-            },
+            geometry: { coordinates: [doc.data().coords[1], doc.data().coords[0]] },
+            properties: doc.data(),
             id: doc.data().quakeId
           };
           createMarker(mapAll, eq, true);
@@ -237,79 +280,84 @@ document.addEventListener("DOMContentLoaded", () => {
   showAPI.addEventListener('click', loadAPIQuakes);
   showFavoritesBtn.addEventListener('click', loadFavoriteQuakes);
 
-  mapAll.on('popupopen', function(e){
-  const popupNode = e.popup.getElement();
+  //POPUPS DE FAVORITOS 
+  mapAll.on('popupopen', function (e) {
+    const popupNode = e.popup.getElement();
 
-  const addBtn = popupNode.querySelector('.addFavBtn');
-  if(addBtn){
-    addBtn.addEventListener('click', ()=>{
-      if(!auth.currentUser) return Swal.fire({
-        icon: 'warning',
-        title: 'Debes iniciar sesión'
-      });
-
-      const userId = auth.currentUser.uid;
-      const quakeId = addBtn.dataset.id;
-      const docRef = db.collection('favorites').doc(userId+'_'+quakeId);
-
-      docRef.get().then(doc=>{
-        if(!doc.exists){
-          docRef.set({
-            userId,
-            quakeId,
-            title: addBtn.dataset.title,
-            place: addBtn.dataset.place,
-            mag: parseFloat(addBtn.dataset.mag),
-            coords: [parseFloat(addBtn.dataset.lat), parseFloat(addBtn.dataset.lng)],
-            time: parseInt(addBtn.dataset.time)
-          }).then(()=>Swal.fire({
-            icon: 'success',
-            title: 'Añadido a favoritos!',
-            showConfirmButton: false,
-            timer: 1500
-          }));
-        } else {
-          Swal.fire({
-            icon: 'info',
-            title: 'Este terremoto ya está en favoritos'
-          });
+    // Botón para añadir a favoritos
+    const addBtn = popupNode.querySelector('.addFavBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+        if (!auth.currentUser) {
+          return Swal.fire({ icon: 'warning', title: 'Debes iniciar sesión' });
         }
-      });
-    });
-  }
 
-  const removeBtn = popupNode.querySelector('.removeFavBtn');
-  if(removeBtn){
-    removeBtn.addEventListener('click', ()=>{
-      const userId = auth.currentUser.uid;
-      const quakeId = removeBtn.dataset.id;
-      db.collection('favorites').doc(userId+'_'+quakeId).delete()
-        .then(()=>{
-          Swal.fire({
-            icon: 'success',
-            title: 'Eliminado de favoritos',
-            showConfirmButton: false,
-            timer: 1500
-          });
-          loadFavoriteQuakes();
+        const userId = auth.currentUser.uid;
+        const quakeId = addBtn.dataset.id;
+        const docRef = db.collection('favorites').doc(userId + '_' + quakeId);
+
+        docRef.get().then(doc => {
+          if (!doc.exists) {
+            docRef.set({
+              userId,
+              quakeId,
+              title: addBtn.dataset.title,
+              place: addBtn.dataset.place,
+              mag: parseFloat(addBtn.dataset.mag),
+              coords: [parseFloat(addBtn.dataset.lat), parseFloat(addBtn.dataset.lng)],
+              time: parseInt(addBtn.dataset.time)
+            }).then(() => Swal.fire({
+              icon: 'success',
+              title: 'Añadido a favoritos!',
+              showConfirmButton: false,
+              timer: 1500
+            }));
+          } else {
+            Swal.fire({ icon: 'info', title: 'Este terremoto ya está en favoritos' });
+          }
         });
-    });
-  }
-});
+      });
+    }
 
-  /********** MAPA FILTRADO **********/
-  document.getElementById('applyFilter').addEventListener('click',()=>{
+    // Botón para eliminar de favoritos
+    const removeBtn = popupNode.querySelector('.removeFavBtn');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', () => {
+        const userId = auth.currentUser.uid;
+        const quakeId = removeBtn.dataset.id;
+        db.collection('favorites').doc(userId + '_' + quakeId).delete()
+          .then(() => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Eliminado de favoritos',
+              showConfirmButton: false,
+              timer: 1500
+            });
+            loadFavoriteQuakes();
+          });
+      });
+    }
+  });
+
+  //FILTRO DE TERREMOTOS 
+  document.getElementById('applyFilter').addEventListener('click', () => {
     const minMag = document.getElementById('minMag').value;
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
     let url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minmagnitude=${minMag}&limit=50`;
-    if(startDate) url+=`&starttime=${startDate}`;
-    if(endDate) url+=`&endtime=${endDate}`;
 
-    fetch(url).then(res=>res.json()).then(data=>{
-      mapFiltered.eachLayer(l=>{if(l instanceof L.CircleMarker) mapFiltered.removeLayer(l)});
-      data.features.forEach(eq=>createMarker(mapFiltered, eq));
-    });
+    // Añado filtros de fecha si existen
+    if (startDate) url += `&starttime=${startDate}`;
+    if (endDate) url += `&endtime=${endDate}`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        mapFiltered.eachLayer(l => {
+          if (l instanceof L.CircleMarker) mapFiltered.removeLayer(l);
+        });
+        data.features.forEach(eq => createMarker(mapFiltered, eq));
+      });
   });
 
 });
