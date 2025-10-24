@@ -1,22 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
 
 :root {
-    --background: #BEA8A7;
-    --primary: #2A0800;
-    --secondary: #775144;
-    --terciary: #C09891;
+    --background: #f1e8e5;
+    --primary: #333;
+    --secondary: #555555;
+    --terciary: #7f7f7f;
     --font-normal: 400;
     --font-light: 300;
     --font-bold: 900;
 }
 
 body {
-  font-family: "Lato", sans-serif;
+  font-family: "Archivo Black", sans-serif;
   font-weight: var(--font-light);
   margin: 0;
   background: var(--background);
   height: 100%;
-  color: #333;
+  color: var(--primary);
   display: flex;
   flex-direction: column;
 }
@@ -24,7 +24,7 @@ body {
 .message {
   text-align: center;
   margin: 0;
-  color: #555;
+  color: var(--primary);
 }
 
 .navbar {

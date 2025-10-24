@@ -41,31 +41,51 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /********** FIREBASE AUTH **********/
   const signUpUser = (name, email, password) => {
-    auth.createUserWithEmailAndPassword(email, password)
-      .then(async userCredential => {
-        const user = userCredential.user;
-        await db.collection("users").doc(user.uid).set({
-          name, email, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        localStorage.setItem("userName", name);
-        updateUIForAuth(user);
-        registerFormModal.classList.add("hidden");
-      })
-      .catch(err => alert(err.message));
-  };
+  auth.createUserWithEmailAndPassword(email, password)
+    .then(async userCredential => {
+      const user = userCredential.user;
+      await db.collection("users").doc(user.uid).set({
+        name, email, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      localStorage.setItem("userName", name);
+      updateUIForAuth(user);
+      registerFormModal.classList.add("hidden");
+      Swal.fire({
+        icon: 'success',
+        title: 'Usuario registrado!',
+        showConfirmButton: false,
+        timer: 1500
+      });
+    })
+    .catch(err => Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: err.message
+    }));
+};
 
-  const signInUser = (email, password) => {
-    auth.signInWithEmailAndPassword(email, password)
-      .then(async userCredential => {
-        const user = userCredential.user;
-        const doc = await db.collection("users").doc(user.uid).get();
-        const name = doc.exists ? doc.data().name : user.email;
-        localStorage.setItem("userName", name);
-        updateUIForAuth(user);
-        loginFormModal.classList.add("hidden");
-      })
-      .catch(err => alert(err.message));
-  };
+ const signInUser = (email, password) => {
+  auth.signInWithEmailAndPassword(email, password)
+    .then(async userCredential => {
+      const user = userCredential.user;
+      const doc = await db.collection("users").doc(user.uid).get();
+      const name = doc.exists ? doc.data().name : user.email;
+      localStorage.setItem("userName", name);
+      updateUIForAuth(user);
+      loginFormModal.classList.add("hidden");
+      Swal.fire({
+        icon: 'success',
+        title: 'Bienvenido!',
+        showConfirmButton: false,
+        timer: 1500
+      });
+    })
+    .catch(err => Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: err.message
+    }));
+};
 
   const signOutUser = () => {
     auth.signOut().then(() => {
@@ -218,43 +238,64 @@ document.addEventListener("DOMContentLoaded", () => {
   showFavoritesBtn.addEventListener('click', loadFavoriteQuakes);
 
   mapAll.on('popupopen', function(e){
-    const popupNode = e.popup.getElement();
+  const popupNode = e.popup.getElement();
 
-    const addBtn = popupNode.querySelector('.addFavBtn');
-    if(addBtn){
-      addBtn.addEventListener('click', ()=>{
-        if(!auth.currentUser) return alert('Debes iniciar sesión');
-        const userId = auth.currentUser.uid;
-        const quakeId = addBtn.dataset.id;
-        const docRef = db.collection('favorites').doc(userId+'_'+quakeId);
-        docRef.get().then(doc=>{
-          if(!doc.exists){
-            docRef.set({
-              userId,
-              quakeId,
-              title: addBtn.dataset.title,
-              place: addBtn.dataset.place,
-              mag: parseFloat(addBtn.dataset.mag),
-              coords: [parseFloat(addBtn.dataset.lat), parseFloat(addBtn.dataset.lng)],
-              time: parseInt(addBtn.dataset.time)
-            }).then(()=>alert('Añadido a favoritos!'));
-          } else {
-            alert('Este terremoto ya está en favoritos');
-          }
+  const addBtn = popupNode.querySelector('.addFavBtn');
+  if(addBtn){
+    addBtn.addEventListener('click', ()=>{
+      if(!auth.currentUser) return Swal.fire({
+        icon: 'warning',
+        title: 'Debes iniciar sesión'
+      });
+
+      const userId = auth.currentUser.uid;
+      const quakeId = addBtn.dataset.id;
+      const docRef = db.collection('favorites').doc(userId+'_'+quakeId);
+
+      docRef.get().then(doc=>{
+        if(!doc.exists){
+          docRef.set({
+            userId,
+            quakeId,
+            title: addBtn.dataset.title,
+            place: addBtn.dataset.place,
+            mag: parseFloat(addBtn.dataset.mag),
+            coords: [parseFloat(addBtn.dataset.lat), parseFloat(addBtn.dataset.lng)],
+            time: parseInt(addBtn.dataset.time)
+          }).then(()=>Swal.fire({
+            icon: 'success',
+            title: 'Añadido a favoritos!',
+            showConfirmButton: false,
+            timer: 1500
+          }));
+        } else {
+          Swal.fire({
+            icon: 'info',
+            title: 'Este terremoto ya está en favoritos'
+          });
+        }
+      });
+    });
+  }
+
+  const removeBtn = popupNode.querySelector('.removeFavBtn');
+  if(removeBtn){
+    removeBtn.addEventListener('click', ()=>{
+      const userId = auth.currentUser.uid;
+      const quakeId = removeBtn.dataset.id;
+      db.collection('favorites').doc(userId+'_'+quakeId).delete()
+        .then(()=>{
+          Swal.fire({
+            icon: 'success',
+            title: 'Eliminado de favoritos',
+            showConfirmButton: false,
+            timer: 1500
+          });
+          loadFavoriteQuakes();
         });
-      });
-    }
-
-    const removeBtn = popupNode.querySelector('.removeFavBtn');
-    if(removeBtn){
-      removeBtn.addEventListener('click', ()=>{
-        const userId = auth.currentUser.uid;
-        const quakeId = removeBtn.dataset.id;
-        db.collection('favorites').doc(userId+'_'+quakeId).delete()
-          .then(()=>{alert('Eliminado de favoritos'); loadFavoriteQuakes();});
-      });
-    }
-  });
+    });
+  }
+});
 
   /********** MAPA FILTRADO **********/
   document.getElementById('applyFilter').addEventListener('click',()=>{
